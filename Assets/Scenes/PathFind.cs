@@ -19,6 +19,7 @@ public class PathFind : MonoBehaviour
     private bool isInitCPP = false;
     public Texture2D dataTex;
     byte[] data = null;
+    byte[] data_512 = null;
     List<Vector2> lstpath = new List<Vector2>();
     int data_width = 0;
 
@@ -40,21 +41,33 @@ public class PathFind : MonoBehaviour
             data[i] = tempdata[i].r;
 
         }
+        data_512 = new byte[512 * 512];
+        for (int i = 0; i < data.Length; i += 4)
+        {
+            bool walkable = true;
+            for (int j = 0; j < 4; j++)
+            {
+                if (data[i + j] == 0) walkable = false;
+            }
+            data_512[i / 4] = (byte)(walkable ? 255 : 0);
+        }
     }
+
+
+
     public bool isWalkable(Vector2 v)
     {
         int x = (int)v.x;
         int y = (int)v.y;
 
-        int temp = data[y * data_width + x];
-        Debug.Log("x:" + x + " " + "y:" + y + " " + "data:" + temp);
+        //Debug.Log("x:" + x + " " + "y:" + y + " " + "data:" + temp);
 
-        return data[y * data_width + x] != 0;
+        return data_512[y * 512 + x] != 0;
     }
     public bool isWalkable(int x, int y)
     {
 
-        return data[y * data_width + x] != 0;
+        return data_512[y * 512 + x] != 0;
     }
     // Start is called before the first frame update
     void Start()
@@ -96,7 +109,8 @@ public class PathFind : MonoBehaviour
     {
         Stopwatch sw = new Stopwatch();
         sw.Start();
-
+        start = new Vector2(start[0] / 4, start[1] / 2);//y除以2，x除以4
+        end = new Vector2(end[0] / 4, end[1] / 2);
         lstPath.Clear();
 
 
@@ -115,7 +129,7 @@ public class PathFind : MonoBehaviour
 
 
 
-  
+
 
 
         //起点
@@ -123,7 +137,7 @@ public class PathFind : MonoBehaviour
         //终点
         Cell endCell = new Cell((int)end[0], (int)end[1], false);
 
-        Debug.LogFormat("寻路开始,start({0}),end({1})!", start, end);
+        //Debug.LogFormat("寻路开始,start({0}),end({1})!", start, end);
 
         openList.Add(startCell);//将起点作为待处理的点放入开启列表
 
@@ -142,7 +156,7 @@ public class PathFind : MonoBehaviour
             //    }
             //}
             //Debug.Log("当前检查点：" + cur.ToString() + " 编号：" + showFindNum + "  open列表节点数量：" + openList.Count);
-            showFindNum++;
+            //showFindNum++;
 
             //从开启列表中删除检查点，把它加入到一个“关闭列表”，列表中保存所有不需要再次检查的方格。
             openList.Remove(cur);
@@ -154,7 +168,7 @@ public class PathFind : MonoBehaviour
                 Cell cell = cur;
                 while (cell != null)
                 {
-                    lstPath.Add(new Vector2(cell.x, cell.y));
+                    lstPath.Add(new Vector2(cell.x * 4, cell.y * 2));
                     cell = cell.parent;
                 }
 
@@ -162,7 +176,7 @@ public class PathFind : MonoBehaviour
 
                 //sw.Stop();
                 TimeSpan ts2 = sw.Elapsed;
-                Debug.Log("寻路结束！总共花费:" + ts2.TotalMilliseconds + "ms");
+                Debug.Log("总共花费:" + ts2.TotalMilliseconds + "ms");
                 return true;
             }
 
@@ -247,7 +261,7 @@ public class PathFind : MonoBehaviour
                 int x = cell.x + i;
                 int y = cell.y + j;
                 // 判断是否越界且不是墙，如果没有，加到列表中
-                if (x < dataTex.width && x >= 0 && y < dataTex.height && y >= 0 && isWalkable(x, y))
+                if (x < 512 && x >= 0 && y < 512 && y >= 0 && isWalkable(x, y))
                 {
                     list.Add(new Cell(x, y, false));
                 }
@@ -277,11 +291,11 @@ public class PathFind : MonoBehaviour
             }
         }
 
-        
+
         if (GUI.Button(new Rect(0, 100, 100, 100), "Find"))
         {
-            if (Find(new Vector2(840, 300), new Vector2(877, 144), lstpath))    //(877,880)    if (Find(new Vector2(100, 65), new Vector2(114, 65), lstpath))                    
-                // new Vector2(840, 300), new Vector2(877, 144)
+            if (Find(new Vector2(50, 50), new Vector2(1000, 1000), lstpath))    //(877,880)    if (Find(new Vector2(100, 65), new Vector2(114, 65), lstpath))                    
+                                                                             // new Vector2(840, 300), new Vector2(877, 144)
             {
                 Debug.Log("find success");
             }
