@@ -3,6 +3,9 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using UnityEngine;
+using System.Diagnostics;
+using Debug = UnityEngine.Debug;
+using System;
 
 public class PathFind : MonoBehaviour
 {
@@ -18,6 +21,10 @@ public class PathFind : MonoBehaviour
     byte[] data = null;
     List<Vector2> lstpath = new List<Vector2>();
     int data_width = 0;
+
+    List<Cell> openList = new List<Cell>();//开启列表
+    List<Cell> closeList = new List<Cell>();//关闭列表
+
     void LoadData()
     {
         data_width = dataTex.width;
@@ -87,6 +94,9 @@ public class PathFind : MonoBehaviour
     //寻路函数入口 
     public bool Find(Vector2 start, Vector2 end, List<Vector2> lstPath)
     {
+        Stopwatch sw = new Stopwatch();
+        sw.Start();
+
         lstPath.Clear();
 
 
@@ -103,8 +113,7 @@ public class PathFind : MonoBehaviour
         //和A*算法无关，只是为了显示使用
         int showFindNum = 1;
 
-        List<Cell> openList = new List<Cell>();//开启列表
-        List<Cell> closeList = new List<Cell>();//关闭列表
+
 
   
 
@@ -118,19 +127,21 @@ public class PathFind : MonoBehaviour
 
         openList.Add(startCell);//将起点作为待处理的点放入开启列表
 
+        //SortedAddToOpenList(startCell);
+
         //如果开启列表没有待处理点表示寻路失败，此路不通
         while (openList.Count > 0)
         {
             //遍历开启列表，找到消费最小的点作为检查点
             Cell cur = openList[0];
-            for (int i = 0; i < openList.Count; i++)
-            {
-                if (openList[i].fCost < cur.fCost && openList[i].hCost < cur.hCost)
-                {
-                    cur = openList[i];
-                }
-            }
-            Debug.Log("当前检查点：" + cur.ToString() + " 编号：" + showFindNum + "  open列表节点数量：" + openList.Count);
+            //for (int i = 0; i < openList.Count; i++)
+            //{
+            //    if (openList[i].fCost < cur.fCost && openList[i].hCost < cur.hCost)
+            //    {
+            //        cur = openList[i];
+            //    }
+            //}
+            //Debug.Log("当前检查点：" + cur.ToString() + " 编号：" + showFindNum + "  open列表节点数量：" + openList.Count);
             showFindNum++;
 
             //从开启列表中删除检查点，把它加入到一个“关闭列表”，列表中保存所有不需要再次检查的方格。
@@ -148,6 +159,10 @@ public class PathFind : MonoBehaviour
                 }
 
                 Debug.Log("寻路结束！");
+
+                //sw.Stop();
+                TimeSpan ts2 = sw.Elapsed;
+                Debug.Log("寻路结束！总共花费:" + ts2.TotalMilliseconds + "ms");
                 return true;
             }
 
@@ -166,9 +181,9 @@ public class PathFind : MonoBehaviour
                     cell.gCost = cost;
                     cell.hCost = GetDistanceCost(cell, endCell);
                     cell.parent = cur;
-                    Debug.Log("cell:" + cell.ToString() + "  parent:" + cur.ToString());
+                    //Debug.Log("cell:" + cell.ToString() + "  parent:" + cur.ToString());
                     if (!openList.ContainsCell(cell))
-                        openList.Add(cell);
+                        SortedAddToOpenList(cell);
                 }
             }
 
@@ -176,6 +191,25 @@ public class PathFind : MonoBehaviour
         Debug.Log("寻路失败!");
 
         return false;
+    }
+
+    void SortedAddToOpenList(Cell cell)
+    {
+        bool inserted = false;
+
+        for (int i = 0; i < openList.Count; ++i)
+        {
+            if (cell.fCost < openList[i].fCost)
+            {
+                openList.Insert(i, cell);
+                break;
+            }
+        }
+
+        if (!inserted)
+        {
+            openList.Add(cell);
+        }
     }
 
     /// <summary>
@@ -243,9 +277,10 @@ public class PathFind : MonoBehaviour
             }
         }
 
+        
         if (GUI.Button(new Rect(0, 100, 100, 100), "Find"))
         {
-            if (Find(new Vector2(400, 530), new Vector2(322, 536), lstpath))    //(877,880)    if (Find(new Vector2(100, 65), new Vector2(114, 65), lstpath))                    
+            if (Find(new Vector2(840, 300), new Vector2(877, 144), lstpath))    //(877,880)    if (Find(new Vector2(100, 65), new Vector2(114, 65), lstpath))                    
                 // new Vector2(840, 300), new Vector2(877, 144)
             {
                 Debug.Log("find success");
@@ -255,6 +290,7 @@ public class PathFind : MonoBehaviour
                 Debug.Log("find failed");
             }
         }
+
         if (GUI.Button(new Rect(0, 200, 100, 100), "FindCPP"))
         {
             if (!isInitCPP)
