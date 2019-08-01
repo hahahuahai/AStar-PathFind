@@ -294,7 +294,7 @@ public class PathFind : MonoBehaviour
 
         if (GUI.Button(new Rect(0, 100, 100, 100), "Find"))
         {
-            if (Find(new Vector2(50, 50), new Vector2(1000, 1000), lstpath))    //(877,880)    if (Find(new Vector2(100, 65), new Vector2(114, 65), lstpath))                    
+            if (Find(new Vector2(50, 50), new Vector2(322, 536), lstpath))    //(877,880)    if (Find(new Vector2(100, 65), new Vector2(114, 65), lstpath))                    
                                                                              // new Vector2(840, 300), new Vector2(877, 144)
             {
                 Debug.Log("find success");
